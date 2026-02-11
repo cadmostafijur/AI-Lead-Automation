@@ -1,0 +1,346 @@
+{
+  "name": "AI Lead Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b6fd4127-2181-41e8-ba71-e0068175211b",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1344,
+        352
+      ],
+      "id": "8af964c6-8ab1-4df1-adb3-254c729f1c5a",
+      "name": "Webhook",
+      "webhookId": "b6fd4127-2181-41e8-ba71-e0068175211b"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI system that processes incoming business leads.\n\nTASKS:\n1. Classify the intent into exactly one of:\n- Sales\n- Support\n- Spam\n\n2. Extract the following fields if present:\n- name\n- company\n- requirement\n\nRULES:\n- Do NOT guess values.\n- If information is missing, return null.\n- Respond ONLY in valid JSON.\n- No explanations, no extra text.\n\nINPUT MESSAGE:\n{{ $json.body.message }}\n\nOUTPUT FORMAT:\n{\n  \"intent\": \"\",\n  \"name\": null,\n  \"company\": null,\n  \"requirement\": null\n}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -976,
+        384
+      ],
+      "id": "8c9214c6-d209-44c2-be1d-5775f7d34cd8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        800
+      ],
+      "id": "56dd6079-dcdd-4884-b029-b059fd7d629e",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "f1bppFZHbgsgyZa2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawText = $json.text;\n\n// Remove markdown code fences if present\nrawText = rawText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\nlet data;\ntry {\n  data = JSON.parse(rawText);\n} catch (e) {\n  throw new Error(\"Invalid JSON from LLM after cleanup\");\n}\n\nreturn [{\n  intent: data.intent || \"Unknown\",\n  name: data.name || null,\n  company: data.company || null,\n  requirement: data.requirement || null,\n  receivedAt: new Date().toISOString()\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -576,
+        384
+      ],
+      "id": "9020b5e5-319e-4246-aede-d5e124dcaeac",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5a9085f1-e02e-4974-a841-e20d6e0ba8fd",
+              "leftValue": "={{ $json.intent }}\n",
+              "rightValue": "Spam",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        160
+      ],
+      "id": "3dc8a247-1a77-4ba0-8266-3bc08fd404b0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are replying to a user who submitted a lead.\n\nHere is the extracted information:\nName: {{ $json.name }}\nCompany: {{ $json.company }}\nRequirement: {{ $json.requirement }}\nIntent: {{ $json.intent }}\n\nInstructions:\n- If name, company, and requirement are present, thank the user and confirm receipt.\n- If any of these are missing, politely ask ONLY for the missing information.\n- Do NOT ask again for information that is already present.\n- Keep the response professional and concise (2–3 sentences).\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -208,
+        896
+      ],
+      "id": "a27a5c38-66e1-4804-b34c-0d86f5f8a90c",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"received\",\n  \"reply\": \"{{ $json.text }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        336,
+        896
+      ],
+      "id": "eaec1839-85f2-4495-b903-9eac6bc2105c",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6148a40a-8acc-4b82-bcd4-f1447fc4b929",
+              "name": "text",
+              "value": "Thanks for your message.",
+              "type": "string"
+            },
+            {
+              "id": "c9ffcd4c-26d1-4eae-a62a-2d011f238130",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -112,
+        144
+      ],
+      "id": "557276f5-cb0c-4157-a6c2-fd0d529c4222",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Bx7UgkSncGSEEQGm",
+          "mode": "list",
+          "cachedResultName": "leads",
+          "cachedResultUrl": "/projects/QIQB8Wh3JoU6nzc9/datatables/Bx7UgkSncGSEEQGm"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "requirement",
+              "displayName": "requirement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "receivedAt",
+              "displayName": "receivedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -144,
+        496
+      ],
+      "id": "830f645e-6d18-4e7e-878c-f45b48ca0f38",
+      "name": "Insert row"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1b0039ec-838f-4b8e-85e1-48779679a90f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7cb5c80c43af1378009b218bd4d4655608958bb1b17092baf88adf2052c4ca74"
+  },
+  "id": "PHtTIM5t3ZNkRX3_Qe-am",
+  "tags": []
+}
