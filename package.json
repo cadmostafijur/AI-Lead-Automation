@@ -1,0 +1,27 @@
+{
+  "name": "ai-lead-automation",
+  "version": "1.0.0",
+  "description": "This project implements an AI-driven lead handling automation using n8n and a Large Language Model (LLM). The system accepts incoming lead messages via a webhook, classifies intent, extracts structured data, stores it in a datastore, and sends an AI-generated automated response.",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cadmostafijur/AI-Lead-Automation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/cadmostafijur/AI-Lead-Automation/issues"
+  },
+  "homepage": "https://github.com/cadmostafijur/AI-Lead-Automation#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "node-fetch": "^3.3.2"
+  }
+}

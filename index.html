@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Lead Submission</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="title">AI Lead Submission</h1>
+      <p class="subtitle">Submit your message and receive an AI-generated response powered by n8n.</p>
+    </header>
+
+    <main class="main">
+      <section class="card">
+        <form id="lead-form" class="form">
+          <label for="message" class="label">Message</label>
+          <textarea
+            id="message"
+            name="message"
+            class="input"
+            rows="5"
+            placeholder="Describe your request or requirement..."
+            required
+          ></textarea>
+
+          <button type="submit" class="button" id="submit-button">
+            Submit
+          </button>
+
+          <div class="status" id="status"></div>
+        </form>
+      </section>
+
+      <section class="card response-card" id="response-card" hidden>
+        <h2 class="section-title">AI Response</h2>
+        <div id="response-text" class="response-text"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <small>Demo AI-powered lead submission frontend.</small>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
